@@ -1,10 +1,10 @@
-#include "uVC.cpp"
+#include "uVC.h"
 
 int main()
 {
-    std::string data = "DTest<DTest<FTestDoc.wut<0,0>>Fnew document.docx<0,0>Fnew text document.txt<0,0>DTest2<Fhello.png<0,37819>>>DWHAT?<>Ftest.txt<32819,1231289>";
-    FileSystem system;
-    system.parse(data);
+    //std::string data = "DTest<DTest<FTestDoc.wut<0,0>>Fnew document.docx<0,0>Fnew text document.txt<0,0>DTest2<Fhello.png<0,37819>>>DWHAT?<>Ftest.txt<32819,1231289>";
+    FileSystem system = FileSystem("Test key", "data.txt");
+    //system.parse(data);
     std::string input;
     //File f = File("TEST!", 0, 0);
     //f.importFile("C:/Users/Ryan/Desktop/vars.cpp");
@@ -44,5 +44,6 @@ int main()
             continue;
         }
     }
+    system.close();
     return 0;
 }
