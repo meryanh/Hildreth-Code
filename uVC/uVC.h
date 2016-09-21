@@ -1,13 +1,10 @@
 #include <vector>
-#include <cstdlib>
 #include <sstream>
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <time.h>
 #include "sys/stat.h"
 #if defined(__linux__) || defined(__APPLE__)
-    #include <sys/stat.h>
     #include <unistd.h>
     #define GetCurrentDir getcwd
 #elif __WIN32__
@@ -15,7 +12,6 @@
     #include <direct.h>
     #define GetCurrentDir _getcwd
 #endif
-#include <stdio.h>
 #define BLOCK_SIZE 2048
 #define DELIMITER ','
 
@@ -212,7 +208,7 @@ FileSystem::FileSystem(std::string _key, std::string _path)
             std::ofstream fout;
             std::string tmp = _key;
             unsigned int length = tmp.length();
-            srand (time(NULL));
+            srand(time(NULL));
             
             // Pad key with random values
             if (key.length() > 255)
@@ -234,6 +230,7 @@ FileSystem::FileSystem(std::string _key, std::string _path)
             fout.write(tmp.c_str(), 256);
             
             // TEST (writing out fake filesystem data) ///////////////////////////////////////////////////////////////
+            // Remove when done testing this function
             fout.seekp(256);
             char chars[512] = "DTest<DTest<FTestDoc.wut<0,0>>Fnew document.docx<0,0>Fnew text document.txt<0,0>DTest2<Fhello.png<0,37819>>>DWHAT?<>Ftest.txt<32819,1231289>";
             encryptDecrypt(chars, _key);

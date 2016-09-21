@@ -1,2 +1,2 @@
-cls && g++ test.cpp -static && a.exe
+cls && g++ test.cpp -O3 -static && a.exe
 pause
