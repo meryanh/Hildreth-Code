@@ -25,11 +25,11 @@ static unsigned long long int toNum(std::string v);
 std::string replace(std::string& str, char find, char replace);
 std::string sanitize(std::string& str);
 bool beginsWith(const std::string &input,const std::string &cmp);
-    
+
 class FileSystem
 {
 private:
-    std::vector<unsigned long long int> empty;
+    std::vector<File*> empty;
     unsigned long long int end;
     std::string path;
     std::string key;
@@ -44,7 +44,15 @@ public:
     void set_current(Directory *dir);
     void open(std::string path);
     void close();
-    void parse(const std::string &input);
+    
+    File* create_file(Directory* dir, unsigned long long int size);
+    bool delete_file(Directory* dir, File* file);
+    Directory* create_directory(Directory* dir);
+    bool delete_directory(Directory* dir);
+    bool move_file(File* file, Directory* src, Directory* dst);
+    bool move_directory(Directory* src, Directory* dst);
+    
+    bool parse(const std::string &input, Directory* dir = NULL);
     std::string filesAtPath(const std::string &path);
     std::string directoriesAtPath(const std::string &path);
     void mkdir(std::string dir);
@@ -83,7 +91,9 @@ public:
     Directory(std::string _title, Directory *_parent);
     ~Directory();
     File* add(File *file);
+    bool forget(File *file);
     Directory* add(Directory *dir);
+    bool forget(Directory *dir);
     Directory* get_parent();
     std::string get_title();
     std::string path();
@@ -196,11 +206,12 @@ FileSystem::FileSystem(std::string _key, std::string _path)
             fin.seekg(256);
             fin.read(buffer, BLOCK_SIZE-256);
             fin.close();
-            std::cout << buffer << std::endl << std::endl << std::endl;
             encryptDecrypt(buffer, _key, BLOCK_SIZE-256);
-            std::cout << buffer << std::endl << std::endl << std::endl;
-            parse(std::string(buffer));
-            std::cout << root->data() << std::endl;
+            if (!parse(std::string(buffer)))
+            {
+                std::cout << "ERROR: Invalid key or file is corrupted!\n";
+                exit(1);
+            }
         }
         else
         {
@@ -208,9 +219,9 @@ FileSystem::FileSystem(std::string _key, std::string _path)
             std::ofstream fout;
             std::string tmp = _key;
             unsigned int length = tmp.length();
-            srand(time(NULL));
             
-            // Pad key with random values
+            // Pad key with pseudo-random values
+            srand(time(NULL));
             if (key.length() > 255)
             {
                 tmp = tmp.substr(255);
@@ -233,6 +244,7 @@ FileSystem::FileSystem(std::string _key, std::string _path)
             // Remove when done testing this function
             fout.seekp(256);
             char chars[512] = "DTest<DTest<FTestDoc.wut<0,0>>Fnew document.docx<0,0>Fnew text document.txt<0,0>DTest2<Fhello.png<0,37819>>>DWHAT?<>Ftest.txt<32819,1231289>";
+            parse(chars);
             encryptDecrypt(chars, _key);
             fout.write(chars, 140);
             // END TEST //////////////////////////////////////////////////////////////////////////////////////////////
@@ -283,14 +295,16 @@ void FileSystem::set_current(Directory *dir)
     current = dir;
 }
 
-// Convert an input std::string to a directory structure
-// Bad data will likely result in a program crash
-void FileSystem::parse(const std::string &input)
+// Convert an input string to a directory structure
+// Provide a directory pointer to add lazy-loaded sub-directories
+// Returns true if parsing was successful
+bool FileSystem::parse(const std::string &input, Directory* dir)
 {
+    if (dir == NULL)
+        dir = root;
     std::string data;
     std::string filename;
     std::vector<std::string> addresses;
-    Directory *dir = root;
     dir->clean();
     for(int i = 0; i < input.length(); i++)
     {
@@ -318,10 +332,18 @@ void FileSystem::parse(const std::string &input)
         }
         else if (input[i] == '>')
             dir = (dir->get_parent());
+        else if (input[i] == '\0')
+        {
+            root->clean();
+            return false;
+        }
         else
-            break;
+        {
+            return true;   
+        }
     }
     current = root;
+    return true;
 }
 
 std::string FileSystem::filesAtPath(const std::string &path)
@@ -540,8 +562,7 @@ void File::importFile(std::string path)
     {
         sys->encryptDecrypt(buffer, "Some Key");
         // Write buffer to archive at offset
-        sys->encryptDecrypt(buffer, "Some Key");    // DEBUG
-        std::cout << buffer;                // DEBUG
+        // ...
     }
     
     // Clean up garbage data
@@ -552,8 +573,7 @@ void File::importFile(std::string path)
     // Perform action with left-over data
     sys->encryptDecrypt(buffer, "Some Key");
     // Write buffer to archive at offset
-    sys->encryptDecrypt(buffer, "Some Key"); // DEBUG
-    std::cout << buffer;                // DEBUG
+    // ...
 
     // Store the new size of the file
     length = size;
@@ -708,7 +728,12 @@ Directory* Directory::get(std::string path)
 // Remove all data from this directory
 void Directory::clean()
 {
+    for (int i = 0; i < directories.size(); i++)
+        delete directories[i];
     directories.clear();
+    
+    for (int i = 0; i < files.size(); i++)
+        delete files[i];
     files.clear();
 }
 
