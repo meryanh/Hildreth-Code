@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
+#include <cstdint>
 #include "sys/stat.h"
 #if defined(__linux__) || defined(__APPLE__)
     #include <unistd.h>
@@ -19,9 +20,16 @@ class File;
 class Directory;
 class FileSystem;
 
+template <typename T, typename I>
+T volatile_cast(I value);
+uint64_t decompress(std::string value);
+template <typename T>
+T decompress(std::string value);
+template <typename T>
+std::string compress(T value);
 static std::vector<std::string> split(std::string v, char d);
-static std::string toString(unsigned long long int v);
-static unsigned long long int toNum(std::string v);
+static std::string toString(uint64_t v);
+static uint64_t toNum(std::string v);
 std::string replace(std::string& str, char find, char replace);
 std::string sanitize(std::string& str);
 bool beginsWith(const std::string &input,const std::string &cmp);
@@ -30,7 +38,7 @@ class FileSystem
 {
 private:
     std::vector<File*> empty;
-    unsigned long long int end;
+    uint64_t end;
     std::string path;
     std::string key;
     Directory *root;
@@ -45,7 +53,7 @@ public:
     void open(std::string path);
     void close();
     
-    File* create_file(Directory* dir, unsigned long long int size);
+    File* create_file(Directory* dir, uint64_t size);
     bool delete_file(Directory* dir, File* file);
     Directory* create_directory(Directory* dir);
     bool delete_directory(Directory* dir);
@@ -66,15 +74,15 @@ class File
 private:
     std::string filename;
     FileSystem* sys;
-    unsigned long long int address;
-    unsigned long long int length;
-    unsigned long long int getFileSize(std::string _filename);
+    uint64_t address;
+    uint64_t length;
+    uint64_t getFileSize(std::string _filename);
 public:
-    File(std::string _filename, unsigned long long int _address, unsigned long long int _length = 0);
+    File(std::string _filename, uint64_t _address, uint64_t _length = 0);
     std::string data();
     std::string get_filename();
-    unsigned long long int get_size();
-    unsigned long long int get_address();
+    uint64_t get_size();
+    uint64_t get_address();
     void importFile(std::string path);
     void exportFile(std::string path);
 };
@@ -99,6 +107,7 @@ public:
     std::string path();
     std::string file_list();
     std::string directory_list();
+    uint64_t size();
     Directory* get(std::string path);
     void clean();
     std::string data();
@@ -107,6 +116,63 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 // Utility
 //////////////////////////////////////////////////////////////////////////////
+// Convert between any non-pointer type
+template <typename T, typename I>
+T volatile_cast(I value)
+{
+    return (*(T*)(&value));
+}
+
+// Create a mask for the given data type
+template <typename T>
+uint64_t bitmask()
+{
+    return ((~(uint64_t)0) >> (sizeof(uint64_t)-(sizeof(T)))*8);
+}
+
+// Decompress the string and return a 64-bit numerical representation
+uint64_t decompress(std::string value)
+{
+    uint64_t result = 0;
+    int length = value.length()-1;
+    for (int i = length; i >= 0; i--)
+    {
+        result = result << 7;
+        result += (((value[i]) - 63) & 0x7f);
+    }
+    return result;
+}
+
+// Decompress the string and return the specified type
+template <typename T>
+T decompress(std::string value)
+{
+    uint64_t result = 0;
+    int length = value.length()-1;
+    for (int i = length; i >= 0; i--)
+    {
+        result = result << 7;
+        result += (((value[i]) - 63) & 0x7f);
+    }
+    return volatile_cast<T>(result & bitmask<T>());
+}
+
+// Compress any object as a string
+template <typename T>
+std::string compress(T value)
+{
+    uint64_t tmp = volatile_cast<uint64_t>(value) & bitmask<T>();
+    if (tmp == 0)
+        return "?";
+    std::string result = "";
+    while (tmp > 0)
+    {
+        result += ((tmp + 63)&0x7f);
+        tmp = tmp >> 7;
+    }
+    return result;
+}
+
 bool beginsWith(const std::string &input,const std::string &cmp)
 {
     if (input.length() < cmp.length())
@@ -140,7 +206,7 @@ static std::vector<std::string> split(std::string v, char d)
 }
 
 // Convert number to std::string for storage
-static std::string toString(unsigned long long int v)
+static std::string toString(uint64_t v)
 {
     std::stringstream ss;
     ss << v;
@@ -149,17 +215,17 @@ static std::string toString(unsigned long long int v)
 
 
 // Convert std::string to number for calculations
-static unsigned long long int toNum(std::string v)
+static uint64_t toNum(std::string v)
 {
     std::stringstream ss;
-    unsigned long long int result;
+    uint64_t result;
     ss << v;
     ss >> result;
     
     // Check if valid
     if ((result == 0) && (v != "0") && (v != ""))
     {
-        std::cout << "ERROR: Cannot parse std::string as number!";
+        //std::cout << "ERROR: Cannot parse std::string as number!";
         exit(1);
     }
     
@@ -206,10 +272,10 @@ FileSystem::FileSystem(std::string _key, std::string _path)
             fin.seekg(256);
             fin.read(buffer, BLOCK_SIZE-256);
             fin.close();
-            encryptDecrypt(buffer, _key, BLOCK_SIZE-256);
+            //encryptDecrypt(buffer, _key, BLOCK_SIZE-256);
             if (!parse(std::string(buffer)))
             {
-                std::cout << "ERROR: Invalid key or file is corrupted!\n";
+                //std::cout << "ERROR: Invalid key or file is corrupted!\n";
                 exit(1);
             }
         }
@@ -243,10 +309,10 @@ FileSystem::FileSystem(std::string _key, std::string _path)
             // TEST (writing out fake filesystem data) ///////////////////////////////////////////////////////////////
             // Remove when done testing this function
             fout.seekp(256);
-            char chars[512] = "DTest<DTest<FTestDoc.wut<0,0>>Fnew document.docx<0,0>Fnew text document.txt<0,0>DTest2<Fhello.png<0,37819>>>DWHAT?<>Ftest.txt<32819,1231289>";
+            char chars[1024] = "DTest<DTest<FTestDoc.wut<fdsa,asdf>>Fnew document.docx<abc,xyz>Fnew text document.txt<1111,9999>DTest2<Fhello.png<0,3781>>>DWHAT?<>Ftest.txt<3281,123>";
             parse(chars);
-            encryptDecrypt(chars, _key);
-            fout.write(chars, 140);
+            //encryptDecrypt(chars, _key);
+            fout.write(chars, 150);
             // END TEST //////////////////////////////////////////////////////////////////////////////////////////////
             
             // Pad system partition with null characters.
@@ -260,6 +326,7 @@ FileSystem::FileSystem(std::string _key, std::string _path)
 FileSystem::~FileSystem()
 {
     delete root;
+    // Delete 'empty'
 }
 
 void FileSystem::close()
@@ -328,7 +395,7 @@ bool FileSystem::parse(const std::string &input, Directory* dir)
             for (int j = 0; j < 100 && input[i] != '>'; j++)
                 data += input[i++];
             addresses = split(data, DELIMITER);
-            dir->add(new File(filename, toNum(addresses[0]), toNum(addresses[1])));
+            dir->add(new File(filename, decompress(addresses[0]), decompress(addresses[1])));
         }
         else if (input[i] == '>')
             dir = (dir->get_parent());
@@ -517,22 +584,25 @@ void FileSystem::mkdir(std::string dir)
 //////////////////////////////////////////////////////////////////////////////
 // File
 //////////////////////////////////////////////////////////////////////////////
-unsigned long long int File::getFileSize(std::string _filename)
+uint64_t File::getFileSize(std::string _filename)
 {
     struct stat stat_buf;
-    unsigned long long int rc = stat(_filename.c_str(), &stat_buf);
+    uint64_t rc = stat(_filename.c_str(), &stat_buf);
     return rc == 0 ? stat_buf.st_size : -1;
 }
 
-File::File(std::string _filename, unsigned long long int _address, unsigned long long int _length)
+File::File(std::string _filename, uint64_t _address, uint64_t _length)
 {
+    //std::cout << _filename << ":" << _address << ":" << _length << std::endl;
     filename = sanitize(_filename);
     address = _address;
     length = _length;
 }
 std::string File::data()
 {
-    return ("F" + filename + "<" + toString(address) + "," + toString(length) + ">");
+    //std::cout << filename << ":" << address << ":" << length << std::endl;
+    //std::cout << ("F" + filename + "<" + compress(address) + "," + compress(length) + ">") << std::endl;
+    return ("F" + filename + "<" + compress(address) + "," + compress(length) + ">");
 }
 
 std::string File::get_filename()
@@ -540,12 +610,12 @@ std::string File::get_filename()
     return filename;
 }
 
-unsigned long long int File::get_size()
+uint64_t File::get_size()
 {
     return length;
 }
 
-unsigned long long int File::get_address()
+uint64_t File::get_address()
 {
     return address;
 }
@@ -555,7 +625,7 @@ void File::importFile(std::string path)
     // Read file
     std::ifstream fin(path.c_str(), std::ifstream::binary);
     char buffer[BLOCK_SIZE+1] = {0};
-    unsigned long long int size = getFileSize(path);
+    uint64_t size = getFileSize(path);
     
     // Perform read until read fails
     while (fin.read(buffer, BLOCK_SIZE))
@@ -742,7 +812,8 @@ std::string Directory::data()
 {
     std::string result= "";
     if (parent != NULL) result += "D" + title + "<";
-    for (int i = 0; i < directories.size(); i++)
+    int count = directories.size();
+    for (int i = 0; i < count; i++)
     {
         result += directories[i]->data();
     }

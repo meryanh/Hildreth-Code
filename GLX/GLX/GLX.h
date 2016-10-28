@@ -13,6 +13,7 @@
 #endif
 
 // Required libraries:
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <sstream>
