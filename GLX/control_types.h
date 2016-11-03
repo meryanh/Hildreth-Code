@@ -4,10 +4,10 @@
 void empty_button()
 {
     Color color;
-    if (control->active)
-        color = control->color["hilite"] ;
+    if (X.control->active)
+        color = X.control->color["hilite"] ;
     else
-        color = control->color["background"] ;
+        color = X.control->color["background"] ;
     
     glColor3f(
         color[0], 
@@ -15,16 +15,16 @@ void empty_button()
         color[2]);
         
     glRectf(
-        control->rect[0], 
-        control->rect[1],
-        control->rect[2],
-        control->rect[3]);
+        X.control->rect[0], 
+        X.control->rect[1],
+        X.control->rect[2],
+        X.control->rect[3]);
 }
 
 // Plain text field
 void text_field()
 {
-    Color color = control->color["text"] ;
+    Color color = X.control->color["text"] ;
     
     glColor3f(
         color[0], 
@@ -37,7 +37,7 @@ void text_field()
 // Plain text field
 void text_field_editable()
 {
-    Color color = control->color["text"] ;
+    Color color = X.control->color["text"] ;
     
     glColor3f(
         color[0], 
@@ -50,7 +50,7 @@ void text_field_editable()
 // Bordered text field
 void bordered_text_field() // Bordered text field
 {
-    Color color = control->color["border"];
+    Color color = X.control->color["border"];
     
     glColor3f(
         color[0], 
@@ -58,13 +58,13 @@ void bordered_text_field() // Bordered text field
         color[2]);
         
     glBegin(GL_LINE_LOOP);
-        glVertex2d(control->rect[0], control->rect[1]);
-        glVertex2d(control->rect[2], control->rect[1]);
-        glVertex2d(control->rect[2], control->rect[3]);
-        glVertex2d(control->rect[0], control->rect[3]);
+        glVertex2d(X.control->rect[0], X.control->rect[1]);
+        glVertex2d(X.control->rect[2], X.control->rect[1]);
+        glVertex2d(X.control->rect[2], X.control->rect[3]);
+        glVertex2d(X.control->rect[0], X.control->rect[3]);
     glEnd();
     
-    color = control->color["text"] ;
+    color = X.control->color["text"] ;
     
     glColor3f(
         color[0], 
@@ -77,7 +77,7 @@ void bordered_text_field() // Bordered text field
 // Opaque (filed) text field
 void opaque_text_field() // Opaque text field
 {
-    Color color = control->color["background"] ;
+    Color color = X.control->color["background"] ;
     
     glColor3f(
         color[0], 
@@ -85,12 +85,12 @@ void opaque_text_field() // Opaque text field
         color[2]);
         
     glRectf(
-        control->rect[0], 
-        control->rect[1],
-        control->rect[2],
-        control->rect[3]);
+        X.control->rect[0], 
+        X.control->rect[1],
+        X.control->rect[2],
+        X.control->rect[3]);
         
-    color = control->color["text"] ;
+    color = X.control->color["text"] ;
     
     glColor3f(
         color[0], 

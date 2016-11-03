@@ -13,27 +13,32 @@ private:
         _last     = NULL;
         initial   = false;
         idle_rate = 20;
+        root = new Control("root");
+        root->rect(-32768, -32768, 32767, 32767);
+        active  = 0;
+        control = 0;
+        clicked = 0;
     }
     XControl  operator =(XControl& x){}
     XControl* operator &(){}
     XControl& operator *(){}
+    Control* root;
 public:
+    Control* active;    // Active control for idle/activemousemove messages
+    Control* control;   // Currently executing control
+    Control* clicked;   // Previously clicked control
     static XControl _;
-    vector<Control*> idle_controls;
-    vector<Control> controls; // Standard controls
-    vector<Control> toplevel; // TopLevel (UI) controls
+    Control* get_root();
     unsigned int idle_rate;   // Millisecond delay for 'idle'
     Window window;
     
     void start(int* argc, char** argv);
-    Control* get_control(string name);
-    void register_idle();
+    Control* find_control(string &name, Control* c = NULL);
+    Control* control_at_point(int x, int y, Control* c = NULL);
+    //void register_idle();
     
-    XControl& operator [](string i);
-    Control* operator ->();
-    XControl& operator !();
+    void add(Control* c);
     int operator ()(int* argc, char** argv);
-    void operator <<(string i);
 } XControl::_, &X = XControl::_;
 
 #endif

@@ -3,10 +3,10 @@
 #include "Control.h"
 // Control class:
 Control::Control(){}
-Control::Control(string name, int group_id = -1)
+Control::Control(string name, Control* parent)
 {
     _name = name;
-    group = group_id;
+    _parent = parent;
     visible = true;
     enabled = true;
     active = false;
@@ -43,23 +43,47 @@ var& Control::operator [](string i)
     return _vars[i];
 }
 
+Control* Control::operator [](int i)
+{
+    return _controls[i];
+}
+
 var& Control::get(string i)
 {
     return _vars[i];
 }
 
-void Control::set(string i, double v)
+void Control::attribute(string i, double v)
 {
     _vars[i] = v;
 }
 
-void Control::set(string i, string v)
+void Control::attribute(string i, string v)
 {
     _vars[i] = v;
 }
 
-void Control::set(string i, bool v)
+void Control::attribute(string i, bool v)
 {
     _vars[i] = v;
+}
+Control* Control::get_parent()
+{
+    return _parent;
+}
+int Control::count()
+{
+    return _controls.size();
+}
+Control* Control::add(string n)
+{
+    Control* c = new Control(n, this);
+    _controls.push_back(c);
+    return c;
+}
+Control* Control::add(Control* c)
+{
+    _controls.push_back(c);
+    return c;
 }
 #endif

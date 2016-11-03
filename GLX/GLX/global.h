@@ -7,10 +7,6 @@ class var;
 class Control;
 class XControl;
 
-Control* active  = 0;   // Active control for idle/activemousemove messages
-Control* control = 0;   // Currently executing control
-Control* clicked = 0;   // Previously clicked control
-
 // Screen data
 int screenwidth() { return glutGet(GLUT_SCREEN_WIDTH); }
 int screenheight() { return glutGet(GLUT_SCREEN_HEIGHT); }

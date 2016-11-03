@@ -33,80 +33,35 @@ void XControl::start(int* argc, char** argv)
     glutMainLoop();    
 }
 
-// Get a control by name
-Control* XControl::get_control(string name)
+Control* XControl::find_control(string &name, Control* c)
 {
-    Control* _check;
-    if (_toplevel)
+    if (c == NULL)
+        c = root;
+    if (c->name() == name)
+        return c;
+    int count = c->count();
+    Control* tmp;
+    for (int i = 0; i < count; i++)
     {
-        for (int i = 0; i < toplevel.size(); i++)
-        {
-            _check = &toplevel.at(i);
-            if (_check->name() == name)
-                return _check;
-        }
-        toplevel.push_back(Control(name));
-        return &toplevel.back();
+        tmp = find_control(name, (*c)[i]);
+        if (tmp != NULL)
+            return tmp;
     }
-    else
-    {
-        for (int i = 0; i < controls.size(); i++)
-        {
-            _check = &controls.at(i);
-            if (_check->name() == name)
-                return _check;
-        }
-        controls.push_back(Control(name));
-        return &controls.back();
-    }
+    return NULL;
 }
 
-void XControl::register_idle()
+// Get the root control
+Control* XControl::get_root()
 {
-    idle_controls.push_back(_last);
-}
-
-XControl& XControl::operator [](string i) 
-{
-    _last = get_control(i);
-    _toplevel = false;
-    return *this;
-}
-Control* XControl::operator ->() 
-{ 
-    if (_last)
-        return _last;
-    else if (!_toplevel)
-        return &controls[0];
-    else 
-        return &toplevel[0];
-}
-XControl& XControl::operator !()
-{
-    _toplevel = true;
-    return *this;
+    return root;
 }
 int XControl::operator ()(int* argc, char** argv)
 {
     start(argc, argv);
 }
-void XControl::operator <<(string i){ _last->set("text", i); }
-
-// Show/Hide a group by ID
-void group_vis(int group, bool vis)
+void XControl::add(Control* c)
 {
-    Control* _check;
-    for (int i = 0; i < X.controls.size(); i++)
-    {
-        _check = &X.controls.at(i);
-        if (_check->group == group)
-        {
-            if (_check->visible)
-                _check->show();
-            else
-                _check->hide();
-        }
-    }
+    root->add(c);
 }
 
 // Print text with no control binding
@@ -130,11 +85,11 @@ void draw_text(int x, int y, Color color, const char *string)
     }
 }
 
-// Print text aligned to the center of the active control
+// Print text aligned to the center of the X.active control
 void center_text(int h_padding = 0, int v_padding = 0)
 {
     // Get text width and height
-    const char *string = control->get("text").value.c_str();
+    const char *string = X.control->get("text").value.c_str();
     int line_width = 0;
     int width  = font_width;
     int height = font_height;
@@ -154,15 +109,15 @@ void center_text(int h_padding = 0, int v_padding = 0)
     }
     
     // Calculate offsets
-    int h_offset = control->rect[0] + (control->width()/2) - (width/2);
+    int h_offset = X.control->rect[0] + (X.control->width()/2) - (width/2);
     if (h_offset < 0)
         h_offset = 0;
-    int v_offset = control->rect[1] + (control->height()/2) - (height/2);
+    int v_offset = X.control->rect[1] + (X.control->height()/2) - (height/2);
     if (v_offset < 0)
         v_offset = 0;
     
     // Draw the text
-    draw_text(h_offset + h_padding, v_offset + v_padding, control->color["text"] , string);
+    draw_text(h_offset + h_padding, v_offset + v_padding, X.control->color["text"] , string);
 }
 
 #include <cstdint>
@@ -408,20 +363,20 @@ void draw_char(char_map c, int x, int y, int font_size)
     }
 }
 
-// Print text aligned to the top-left of the active control
+// Print text aligned to the top-left of the X.active control
 void right_align_text(bool editable = false, int h_padding = 2, int v_padding = 2, int font_size = 1)
 {
     // Draw the text
-    string str = (string)control->get("text") + ' ';
+    string str = (string)X.control->get("text") + ' ';
     int length = str.length();
-    int max_width = control->rect[2] - control->rect[0];
-    int start_x = control->rect[0] + h_padding;
-    int start_y = control->rect[1] + v_padding;
+    int max_width = X.control->rect[2] - X.control->rect[0];
+    int start_x = X.control->rect[0] + h_padding;
+    int start_y = X.control->rect[1] + v_padding;
     char_map c;
     int line_char = 0;
     int line = 0;
     char_map char_bit;
-    bool drawCursor = (editable && (control == active));
+    bool drawCursor = (editable && (X.control == X.active));
     
     if (font_size > 1)
     {
@@ -485,87 +440,73 @@ void right_align_text(bool editable = false, int h_padding = 2, int v_padding = 
     }
 }
 
-// Get the topmost control at the mouseloc
-bool set_control(int x, int y)
+Control* XControl::control_at_point(int x, int y, Control* c)
 {
-    Control* _check;
-    bool set = false;
-    control = 0;
-    
-    // Find in UI controls
-    for (int i = 0; i < X.toplevel.size(); i++)
+    if (c == NULL)
+        c = root;
+    if (!c->within(x, y))
     {
-        _check = &X.toplevel[i];
-        if (_check->visible && _check->enabled && _check->within(x, y))
-        {
-            control = _check;
-            set = true;
-        }
+        control = NULL;
+        return NULL;
     }
-    
-    // Find in standard controls
-    if (!set)
+    else
     {
-        // Get the mouse control
-        for (int i = 0; i < X.controls.size(); i++)
+        int count = c->count();
+        for (int i = 0; i < count; i++)
         {
-            _check = &X.controls[i];
-            if (_check->visible && _check->enabled && _check->within(x, y))
+            if ((*c)[i]->within(x, y))
             {
-                control = _check;
-                set = true;
+                return control_at_point(x, y, (*c)[i]);
             }
         }
-        
-        // Return false no control was found
-        if (!set)
-            return false;
+        control = c;
+        return c;
     }
-    return true;
+    return control;
 }
 
-// Send mousedown, mouseup, and mouserelease to the clicked control
+// Send mousedown, mouseup, and mouserelease to the X.clicked control
 void mouse_func(int button, int state, int x, int y)
 {
     // Set global button data
     mousebutton = button;
     
     // Exit if no controls are at the mouseloc
-    if (!set_control(x, y))
+    if (X.control_at_point(x, y) == NULL)
         return;
     
-    if (control != active)
+    if (X.control != X.active)
         cursor_loc = 0;
     
-    // Set active for keyboard capture
-    active = control;
+    // Set X.active for keyboard capture
+    X.active = X.control;
     
-    // Send the message to the new active control
-    if (state == GLUT_DOWN && control) 
+    // Send the message to the new X.active control
+    if (state == GLUT_DOWN && X.control) 
     {
         clickloc_x = x;
         clickloc_y = y;
-        control->active = true;
-        control->mousedown();
-        clicked = control;
+        X.control->active = true;
+        X.control->mousedown();
+        X.clicked = X.control;
     }
     else if (state == GLUT_UP)
     {
         // Send mouseup
-        if (control && active == control)
+        if (X.control && X.active == X.control)
         {
-            control->mouseup();
-            control->active = false;
-            control = 0;
+            X.control->mouseup();
+            X.control->active = false;
+            X.control = 0;
         }
         
         // Send mouserelease if mouseup on another control
-        if (clicked && !clicked->within(x, y))
+        if (X.clicked && !X.clicked->within(x, y))
         {
-            control = clicked;
-            control->mouserelease();
-            control->active = false;
-            clicked = 0;
+            X.control = X.clicked;
+            X.control->mouserelease();
+            X.control->active = false;
+            X.clicked = 0;
         }
     }
     
@@ -577,20 +518,20 @@ void mouse_func(int button, int state, int x, int y)
 void entry_func(int state)
 {
     // Send mouserelease if mouse leaves/enters the window
-    if (clicked)
+    if (X.clicked)
     {
-        control = clicked;
-        control->mouserelease();
-        control->active = false;
-        clicked = 0;
+        X.control = X.clicked;
+        X.control->mouserelease();
+        X.control->active = false;
+        X.clicked = 0;
     }    
 }
 
-// Send activemousemove to the active control
+// Send activemousemove to the X.active control
 void motion_func(int x, int y)
 {
-    // Exit if no controls are active
-    if (control == 0)
+    // Exit if no controls are X.active
+    if (X.control == 0)
         return;
     
     // Set global mouse data
@@ -600,15 +541,15 @@ void motion_func(int x, int y)
     mouseloc_y = y;
     
     // Send the mousemove message to the control
-    if (control->visible && control->enabled)
-        active->activemousemove();
+    if (X.control->visible && X.control->enabled)
+        X.active->activemousemove();
 }
 
 // Send mouseenter, mouseexit, and mousemove to the mouse control
 void passive_motion_func(int x, int y)
 {
     // Exit if no controls are at the mouseloc
-    if (!set_control(x, y))
+    if (X.control_at_point(x, y) == NULL)
         return;
     
     // Set global mouse data
@@ -618,7 +559,7 @@ void passive_motion_func(int x, int y)
     mouseloc_y = y;
     
     // Send the mousemove message to the control
-    control->mousemove();
+    X.control->mousemove();
     
     // Reload the display
     glutPostRedisplay();
@@ -628,38 +569,26 @@ void passive_motion_func(int x, int y)
 void resize_window_func()
 {
     // Handle the controls
-    for (int i = 0; i < X.controls.size(); i++)
+    for (int i = 0; i < X.get_root()->count(); i++)
     {
-        control = &X.controls[i];
-        control->windowresize();
-    }
-    
-    // Handle toplevel controls
-    for (int i = 0; i < X.toplevel.size(); i++)
-    {
-        control = &X.toplevel[i];
-        control->windowresize();
+        X.control = (*X.get_root())[i];
+        X.control->windowresize();
     }
     
     // Reload the display
     glutPostRedisplay();
 }
 
-// Called on each idle cycle (default 20 ms)
-void idle_func(int data)
+void display_control(Control* c)
 {
-    // Handle the registered controls
-    for (int i = 0; i < X.idle_controls.size(); i++)
+    int count = c->count();
+    X.control = c;
+    c->display();
+    for (int i = 0; i < count; i++)
     {
-        control = X.idle_controls[i];
-        control->idle();
+        if (c->visible)
+            display_control((*c)[i]);
     }
-    
-    // Reload the display
-    glutPostRedisplay();
-    
-    // Restart the timer
-    glutTimerFunc(X.idle_rate, idle_func, 0);
 }
 
 // Display all visible controls.
@@ -668,34 +597,18 @@ void display_func()
     Color& clear = X.window.color;
     glClearColor(clear[0], clear[1], clear[2], clear[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    // Display the controls
-    for (int i = 0; i < X.controls.size(); i++)
-    {
-        control = &X.controls[i];
-        if (control->visible)
-            control->display();
-    }
-    
-    // Display toplevel controls
-    for (int i = 0; i < X.toplevel.size(); i++)
-    {
-        control = &X.toplevel[i];
-        if (control->visible)
-            control->display();
-    }
-
+    display_control(X.get_root());
     glutSwapBuffers();
 }
 
 void keyboard_func(unsigned char key, int x, int y)
 {
-    // Send the keystroke to the active control
-    if (active)
+    // Send the keystroke to the X.active control
+    if (X.active)
     {
         thekey = key;
-        control = active;
-        active->keydown();
+        X.control = X.active;
+        X.active->keydown();
         
         // Reload the display
         glutPostRedisplay();
@@ -704,13 +617,13 @@ void keyboard_func(unsigned char key, int x, int y)
 
 void send_arrow_down()
 {
-    if (active)
+    if (X.active)
     {
-        control = active;
-        control->arrowkeydown();
+        X.control = X.active;
+        X.control->arrowkeydown();
     }
-    else if (control)
-        control->arrowkeydown();
+    else if (X.control)
+        X.control->arrowkeydown();
     
     // Reload the display
     glutPostRedisplay();
@@ -745,13 +658,13 @@ void arrow_down_function(int key, int x, int y)
 
 void send_arrow_up()
 {
-    if (active)
+    if (X.active)
     {
-        control = active;
-        control->arrowkeyup();
+        X.control = X.active;
+        X.control->arrowkeyup();
     }
-    else if (control)
-        control->arrowkeyup();
+    else if (X.control)
+        X.control->arrowkeyup();
         
     // Reload the display
     glutPostRedisplay();

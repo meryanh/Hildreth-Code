@@ -6,6 +6,8 @@ class Control
 private:
     string _name;
     VarMap _vars;
+    Control* _parent;
+    vector<Control*> _controls;
 public:
     Rect rect;
     int group;
@@ -15,7 +17,7 @@ public:
     ColorMap color;
     
     Control();
-    Control(string name, int group_id);
+    Control(string name, Control* parent = NULL);
     
     void show();
     void hide();
@@ -53,13 +55,19 @@ public:
     Function destroy;        // Called when this control is destroyed
     Function idle;           // Called on every timer cycle while active
     
+    Control* get_parent();
+    int count();
+    Control* add(string n);
+    Control* add(Control* c);
+    
     var& operator [](string i);
+    Control* operator [](int i);
     
     var& get(string i);
     
-    void set(string i, double v);
-    void set(string i, string v);
-    void set(string i, bool v);
+    void attribute(string i, double v);
+    void attribute(string i, string v);
+    void attribute(string i, bool v);
 };
 
 #endif
