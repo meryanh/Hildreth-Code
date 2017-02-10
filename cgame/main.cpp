@@ -113,18 +113,18 @@ int main()
     glfwSetKeyCallback(window, key_callback);
     glfwSetFramebufferSizeCallback(window, resize_callback);
 
-    queue_sound(200, 1000, WV_MAX, WT_SQUARE);
+    queue_sound(200, 1000, WV_HALF, WT_SQUARE);
     Sleep(1000);
-    queue_sound(200, 1000, WV_MAX, WT_TRIANGLE);
+    queue_sound(200, 1000, WV_HALF, WT_TRIANGLE);
     Sleep(1000);
-    queue_sound(200, 1000, WV_MAX, WT_SAWTOOTH);
+    queue_sound(200, 1000, WV_HALF, WT_SAWTOOTH);
     Sleep(1000);
-    queue_sound(200, 1000, WV_MAX, WT_SINE);
+    queue_sound(200, 1000, WV_HALF, WT_SINE);
     Sleep(1000);
-    queue_sound(200, 1000, WV_MAX, WT_ABS_SINE);
+    queue_sound(200, 1000, WV_HALF, WT_ABS_SINE);
     Sleep(1000);
-    queue_sound(500, 1000, WV_MAX, WT_SINE);
-    queue_sound(200, 1000, WV_MAX, WT_SINE);
+    queue_sound(400, 1000, WV_HALF, WT_SINE);
+    queue_sound(200, 1000, WV_HALF, WT_SINE);
 
     float bar_percent = 0.5;
     bool up = true;// TEST!
