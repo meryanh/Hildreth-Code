@@ -1,6 +1,4 @@
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <windows.h> // TEST
+#include <soundio/soundio.h>
 
 #define SAMPLING_HZ 2048
 #define WT_NONE     0x00
