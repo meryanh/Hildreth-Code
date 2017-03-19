@@ -10,6 +10,10 @@
 char texture_data[TEXTURE_TOTAL_WIDTH * TEXTURE_TOTAL_HEIGHT * 4];
 GLuint _TEXTURE_id;
 GLFWwindow* window;
+bool KEY_LEFT   = 0;
+bool KEY_UP     = 0;
+bool KEY_RIGHT  = 0;
+bool KEY_DOWN   = 0;
 
 void read_texture()
 {
@@ -23,8 +27,45 @@ void read_texture()
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
+    if (action == GLFW_PRESS)
+    {
+        switch (key)
+        {
+            case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(window, GL_TRUE);
+            break;
+            case GLFW_KEY_UP:
+            KEY_UP = true;
+            break;
+            case GLFW_KEY_DOWN:
+            KEY_DOWN = true;
+            break;
+            case GLFW_KEY_LEFT:
+            KEY_LEFT = true;
+            break;
+            case GLFW_KEY_RIGHT:
+            KEY_RIGHT = true;
+            break;
+        }
+    }
+    else if (action == GLFW_RELEASE)
+    {
+        switch (key)
+        {
+            case GLFW_KEY_UP:
+            KEY_UP = false;
+            break;
+            case GLFW_KEY_DOWN:
+            KEY_DOWN = false;
+            break;
+            case GLFW_KEY_LEFT:
+            KEY_LEFT = false;
+            break;
+            case GLFW_KEY_RIGHT:
+            KEY_RIGHT = false;
+            break;
+        }
+    }
 }
 
 static void resize_callback(GLFWwindow* window, int width, int height)
@@ -33,50 +74,6 @@ static void resize_callback(GLFWwindow* window, int width, int height)
     glPushMatrix();
     glViewport(0, 0, width, height);
     glOrtho(0, width, height, 0, 0, 1);
-}
-
-void draw_hp_bar(int bar_start_pos_x, int bar_start_pos_y, int bar_length, float bar_percent, unsigned char r = 0xFF, unsigned char g = 0xFF, unsigned char b = 0xFF)
-{
-    glColor3ub(0xFF, 0xFF, 0xFF);
-    glBegin(GL_POLYGON);
-    glVertex2i(bar_start_pos_x+4, bar_start_pos_y);
-    glVertex2i(bar_start_pos_x+bar_length+4, bar_start_pos_y);
-    glVertex2i(bar_start_pos_x+bar_length, bar_start_pos_y+5);
-    glVertex2i(bar_start_pos_x, bar_start_pos_y+5);
-    glEnd();
-    
-    int bar_end = bar_percent*bar_length;
-    if (bar_end <= 2)
-        return;
-    else if (bar_end > bar_length)
-        bar_end = bar_length;
-    glColor3ub(r, g, b);
-    glBegin(GL_POLYGON);
-    glVertex2i(bar_start_pos_x+4, bar_start_pos_y+1);
-    glVertex2i(bar_start_pos_x+bar_end+3, bar_start_pos_y+1);
-    glVertex2i(bar_start_pos_x+bar_end-1, bar_start_pos_y+4);
-    glVertex2i(bar_start_pos_x+2, bar_start_pos_y+4);
-    glEnd();
-}
-
-void draw_hp_reverse_overlay(int bar_start_pos_x, int bar_start_pos_y, int bar_length, float bar_percent, float bar_reverse_percent, unsigned char r = 0xFF, unsigned char g = 0xFF, unsigned char b = 0xFF)
-{
-    int bar_end = bar_percent*bar_length;
-    if (bar_end <= 2)
-        return;
-    else if (bar_end > bar_length)
-        bar_end = bar_length;
-    
-    int bar_reverse_start = bar_end - (bar_reverse_percent*bar_length);
-    if (bar_reverse_start <= bar_start_pos_x)
-        bar_reverse_start = bar_start_pos_x;
-    glColor3ub(r, g, b);
-    glBegin(GL_POLYGON);
-    glVertex2i(bar_start_pos_x+bar_reverse_start+4, bar_start_pos_y+1);
-    glVertex2i(bar_start_pos_x+bar_end+3, bar_start_pos_y+1);
-    glVertex2i(bar_start_pos_x+bar_end-1, bar_start_pos_y+4);
-    glVertex2i(bar_start_pos_x+bar_reverse_start+2, bar_start_pos_y+4);
-    glEnd();
 }
 
 void draw_texture_segment(int segment, int x, int y, int size = 16)
@@ -96,6 +93,7 @@ void draw_texture_segment(int segment, int x, int y, int size = 16)
     glVertex2i(x+size, y);
     glEnd();
 }
+#include "game.h"
 
 int main()
 {
@@ -105,6 +103,7 @@ int main()
     if (!glfwInit())
         exit(EXIT_FAILURE);
     
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     window = glfwCreateWindow(_width, _height, "", NULL, NULL);
     if (!window)
     {
@@ -145,39 +144,58 @@ int main()
     glfwSetFramebufferSizeCallback(window, resize_callback);
     
     float bar_percent = 0.5;
+    float bar_reverse_percent = 0.0;
     bool up = false;
+    bool up2 = false;
+    int vx = 0, vy = 0;
+    Map m;
     
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
-        glColor3ub(0xFF, 0xFF, 0xFF);
-       
-        START_TEXTURE
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 40; j++)
-                for (int k = 0; k < 30; k++)
-                {
-                    if ((k+j)%2){
-                        draw_texture_segment(1, j*16, k*16);
-                    }
-                    else
-                    {
-                        draw_texture_segment(2, j*16, k*16);
-                    }
-                }
-        END_TEXTURE
         
-        draw_hp_bar(5, 5, 300, bar_percent, 0x9A, 0x00, 0x00);
-        draw_hp_reverse_overlay(5, 5, 300, bar_percent, 0.2, 0x00, 0x00, 0x00);
+        if (KEY_UP)
+        {
+            vy--;
+            if (vy < 0)
+                vy = 0;
+        }
+        if (KEY_DOWN)
+        {
+            vy++;
+        }
+        if (KEY_LEFT)
+        {
+            vx--;
+            if (vx < 0)
+                vx = 0;
+        }
+        if (KEY_RIGHT)
+        {
+            vx++;
+        }
+        
+        m.draw(vx, vy);
+        
+        draw_hp_bar(5, 5, 300, bar_percent, bar_reverse_percent);
     
         if (bar_percent >= 1.0)
             up = !up;
         else if (bar_percent <= 0.0)
             up = !up;
         if (up)
-            bar_percent+=0.001;
+            bar_percent+=0.01;
         else
-            bar_percent-=0.001;
+            bar_percent-=0.01;
+    
+        if (bar_reverse_percent >= 1.0)
+            up2 = !up2;
+        else if (bar_reverse_percent <= 0.0)
+            up2 = !up2;
+        if (up2)
+            bar_reverse_percent+=0.01;
+        else
+            bar_reverse_percent-=0.01;
         
         glfwSwapBuffers(window);
         glfwPollEvents();
