@@ -97,14 +97,17 @@ void draw_texture_segment(int segment, int x, int y, int size = 16)
 
 int main()
 {
-    int _width = 640;
-    int _height = 480;
+    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    
+    int _width = 1366;
+    int _height = 768;
     
     if (!glfwInit())
         exit(EXIT_FAILURE);
     
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    window = glfwCreateWindow(_width, _height, "", NULL, NULL);
+    //glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    //window = glfwCreateWindow(_width, _height, "", glfwGetPrimaryMonitor(), NULL);
+    window = glfwCreateWindow(_width, _height, "", glfwGetPrimaryMonitor(), NULL);
     if (!window)
     {
         glfwTerminate();
@@ -147,8 +150,18 @@ int main()
     float bar_reverse_percent = 0.0;
     bool up = false;
     bool up2 = false;
-    int vx = 0, vy = 0;
+    double vx = 0, vy = 0;
+    double velocity = 0.7;
     Map m;
+    
+    for (int j = 0; j < MAP_WIDTH; j++)
+        for (int k = 0; k < MAP_HEIGHT; k++)
+        {
+            if (j == 0 || j == MAP_WIDTH - 1 || k == 0 || k == MAP_HEIGHT - 1)
+                m.cells[k][j].texture_id = 1;
+            else
+                m.cells[k][j].texture_id = 2;
+        }
     
     while (!glfwWindowShouldClose(window))
     {
@@ -156,23 +169,19 @@ int main()
         
         if (KEY_UP)
         {
-            vy--;
-            if (vy < 0)
-                vy = 0;
+            vy -= velocity;
         }
         if (KEY_DOWN)
         {
-            vy++;
+            vy += velocity;
         }
         if (KEY_LEFT)
         {
-            vx--;
-            if (vx < 0)
-                vx = 0;
+            vx -= velocity;
         }
         if (KEY_RIGHT)
         {
-            vx++;
+            vx += velocity;
         }
         
         m.draw(vx, vy);

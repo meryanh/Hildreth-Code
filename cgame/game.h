@@ -1,7 +1,7 @@
 #include <iostream>
 using namespace std;
-#define MAP_WIDTH 100
-#define MAP_HEIGHT 100
+#define MAP_WIDTH 30
+#define MAP_HEIGHT 20
 
 #define CV_BLOCKED 1
 
@@ -134,6 +134,10 @@ public:
         attributes = _attributes;
         texture_id = _texture_id;
     }
+    void draw(int x, int y)
+    {
+        draw_texture_segment(texture_id, x, y, 16);
+    }
 };
 
 class Map
@@ -144,10 +148,26 @@ public:
     {
         glColor3ub(0xFF, 0xFF, 0xFF);
         START_TEXTURE
-        for (int j = 0; j < MAP_WIDTH/4; j++)
-            for (int k = 0; k < MAP_HEIGHT/4; k++)
+        int start_x = (offset_x / 16);
+        //if (start_x < 0)
+            //start_x = 0;
+        int start_y = (offset_y / 16);
+        //if (start_y < 0)
+            //start_y = 0;
+        int end_x;
+        int end_y;
+        glfwGetWindowSize(window, &end_x, &end_y);
+        end_x = end_x / 16 / 2;
+        if (end_x > MAP_WIDTH)
+            end_x = MAP_WIDTH;
+        end_y = end_y / 16 /2;
+        if (end_y > MAP_HEIGHT)
+            end_y = MAP_HEIGHT;
+        for (int j = start_x; j < MAP_WIDTH && j < start_x + end_x; j++)
+            for (int k = start_y; k < MAP_HEIGHT && k < start_y + end_y; k++)
             {
-                draw_texture_segment(2, j*16 - (offset_x % 16), k*16 - (offset_y % 16), 16);
+                if (k >= 0 && j >= 0)
+                    cells[k][j].draw( 50 + j*16 - offset_x,50 + k*16 - offset_y);
             }
         END_TEXTURE
     }
