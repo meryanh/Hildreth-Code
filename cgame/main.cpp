@@ -97,17 +97,15 @@ void draw_texture_segment(int segment, int x, int y, int size = 16)
 
 int main()
 {
-    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    
-    int _width = 1366;
-    int _height = 768;
+    int _width = 640;
+    int _height = 360;
     
     if (!glfwInit())
         exit(EXIT_FAILURE);
     
     //glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     //window = glfwCreateWindow(_width, _height, "", glfwGetPrimaryMonitor(), NULL);
-    window = glfwCreateWindow(_width, _height, "", glfwGetPrimaryMonitor(), NULL);
+    window = glfwCreateWindow(_width, _height, "", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -151,7 +149,7 @@ int main()
     bool up = false;
     bool up2 = false;
     double vx = 0, vy = 0;
-    double velocity = 0.7;
+    double velocity = 2.7;
     Map m;
     
     for (int j = 0; j < MAP_WIDTH; j++)
