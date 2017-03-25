@@ -1,9 +1,9 @@
 #include <iostream>
 using namespace std;
-#define MAP_WIDTH 30
+#define MAP_WIDTH 50
 #define MAP_HEIGHT 20
 
-#define CV_BLOCKED 1
+#define CV_BLOCKED 0x01
 
 template <class T>
 class ListItem {
@@ -143,29 +143,48 @@ public:
 class Map
 {
 public:
-    Cell cells[MAP_HEIGHT][MAP_WIDTH];
+    Cell **cell;
+    Map()
+    {
+        cell = new Cell*[MAP_HEIGHT];
+        for(int i = 0; i < MAP_HEIGHT; ++i) {
+            cell[i] = new Cell[MAP_WIDTH];
+        }
+    }
+    ~Map()
+    {
+        for(int i = 0; i < MAP_HEIGHT; ++i) {
+            delete [] cell[i];
+        }
+        delete [] cell;
+    }
     void draw(long long int offset_x, long long int offset_y)
     {
         glColor3ub(0xFF, 0xFF, 0xFF);
-        START_TEXTURE
+        offset_x -= window_width / 2;
+        offset_y -= window_height / 2;
+        glEnable(GL_TEXTURE_2D);
         int start_x = offset_x / 16;
         int start_y = offset_y / 16;
         int end_x;
         int end_y;
         glfwGetWindowSize(window, &end_x, &end_y);
-        end_x = start_x + (end_x / 16) + 1;
+        end_x = start_x + (end_x / 16) + 2;
         if (end_x > MAP_WIDTH)
             end_x = MAP_WIDTH;
-        end_y = start_y + (end_y / 16) + 1;
+        end_y = start_y + (end_y / 16) + 2;
         if (end_y > MAP_HEIGHT)
             end_y = MAP_HEIGHT;
+        if (start_x < 0)
+            start_x = 0;
+        if (start_y < 0)
+            start_y = 0;
         for (int j = start_x; j < end_x; j++)
             for (int k = start_y; k < end_y; k++)
             {
-                if (k >= 0 && j >= 0)
-                    cells[k][j].draw(j*16 - offset_x, k*16 - offset_y);
+                cell[k][j].draw(j*16 - offset_x, k*16 - offset_y);
             }
-        END_TEXTURE
+        glDisable(GL_TEXTURE_2D);
     }
 };
 

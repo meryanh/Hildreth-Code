@@ -1,74 +1,25 @@
-#include <stdio.h>
+#include <cstdio>
 #include <GLFW/glfw3.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <cmath>
 
 #define TEXTURE_TOTAL_WIDTH  1024
 #define TEXTURE_TOTAL_HEIGHT 1024
 #define TEXTURE_FILE "texture.data"
-#define START_TEXTURE glEnable(GL_TEXTURE_2D);
-#define END_TEXTURE glDisable(GL_TEXTURE_2D);
 char texture_data[TEXTURE_TOTAL_WIDTH * TEXTURE_TOTAL_HEIGHT * 4];
 GLuint _TEXTURE_id;
 GLFWwindow* window;
-bool KEY_LEFT   = 0;
-bool KEY_UP     = 0;
-bool KEY_RIGHT  = 0;
-bool KEY_DOWN   = 0;
+int window_width = 640;
+int window_height = 360;
+bool KEY_LEFT  = 0;
+bool KEY_UP    = 0;
+bool KEY_RIGHT = 0;
+bool KEY_DOWN  = 0;
+bool MOUSE_LEFT_DOWN   = 0;
+bool MOUSE_RIGHT_DOWN  = 0;
+bool MOUSE_MIDDLE_DOWN = 0;
 
-void read_texture()
-{
-    FILE *f = fopen(TEXTURE_FILE, "rb");
-    if (f==NULL) { exit (1); }
-    fseek(f, 0, SEEK_END);
-    fseek(f, 0, SEEK_SET);
-    fread(texture_data, TEXTURE_TOTAL_WIDTH * TEXTURE_TOTAL_HEIGHT * 4, 1, f);
-    fclose(f);
-}
-
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (action == GLFW_PRESS)
-    {
-        switch (key)
-        {
-            case GLFW_KEY_ESCAPE:
-            glfwSetWindowShouldClose(window, GL_TRUE);
-            break;
-            case GLFW_KEY_UP:
-            KEY_UP = true;
-            break;
-            case GLFW_KEY_DOWN:
-            KEY_DOWN = true;
-            break;
-            case GLFW_KEY_LEFT:
-            KEY_LEFT = true;
-            break;
-            case GLFW_KEY_RIGHT:
-            KEY_RIGHT = true;
-            break;
-        }
-    }
-    else if (action == GLFW_RELEASE)
-    {
-        switch (key)
-        {
-            case GLFW_KEY_UP:
-            KEY_UP = false;
-            break;
-            case GLFW_KEY_DOWN:
-            KEY_DOWN = false;
-            break;
-            case GLFW_KEY_LEFT:
-            KEY_LEFT = false;
-            break;
-            case GLFW_KEY_RIGHT:
-            KEY_RIGHT = false;
-            break;
-        }
-    }
-}
-
-static void resize_callback(GLFWwindow* window, int width, int height)
+void resize_callback(GLFWwindow* window, int width, int height)
 {
     glPopMatrix();
     glPushMatrix();
@@ -93,19 +44,148 @@ void draw_texture_segment(int segment, int x, int y, int size = 16)
     glVertex2i(x+size, y);
     glEnd();
 }
+
+void read_texture()
+{
+    FILE *f = fopen(TEXTURE_FILE, "rb");
+    if (f==NULL) { exit (1); }
+    fseek(f, 0, SEEK_END);
+    fseek(f, 0, SEEK_SET);
+    fread(texture_data, TEXTURE_TOTAL_WIDTH * TEXTURE_TOTAL_HEIGHT * 4, 1, f);
+    fclose(f);
+}
+
+void window_size_callback(GLFWwindow* window, int width, int height)
+{
+    glfwGetWindowSize(window, &window_width, &window_height);
+}
+
 #include "game.h"
+// TEMP:
+double vx = 50, vy = 50;
+double mouse_x = 0, mouse_y = 0;
+double velocity = 2.0;
+int dash_cooldown = 60;
+int dash_count = 99999;
+int max_dash = 5;
+Map m;
+
+void dash()
+{
+    if (dash_count <= 0)
+        return;
+    
+    double dx = (mouse_x - (window_width / 2));
+    double dy = (mouse_y - (window_height / 2));
+    double r = sqrt(dx * dx + dy * dy);
+    for (int i = 0; i < 50; i++)
+    {
+        vx += velocity * (dx / r);
+        if (m.cell[(int)(vy) / 16][(int)(vx - 5) / 16].attributes & CV_BLOCKED)
+            vx = ((int)vx / 16) * 16 + 5;
+        else if (m.cell[(int)(vy) / 16][(int)(vx + 5) / 16].attributes & CV_BLOCKED)
+            vx = (((int)vx + 15) / 16) * 16 - 5;
+        
+        vy += velocity * (dy / r);
+        if (m.cell[(int)(vy - 5) / 16][(int)(vx - 5) / 16].attributes & CV_BLOCKED)
+            vy = ((int)vy / 16) * 16 + 5;
+        else if (m.cell[(int)(vy + 5) / 16][(int)(vx) / 16].attributes & CV_BLOCKED)
+            vy = (((int)vy + 15) / 16) * 16 - 5;
+    }
+    
+    dash_count--;
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+    {
+        switch (key)
+        {
+            case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(window, GL_TRUE);
+            break;
+            case GLFW_KEY_UP:
+            KEY_UP = true;
+            KEY_DOWN = false;
+            break;
+            case GLFW_KEY_DOWN:
+            KEY_DOWN = true;
+            KEY_UP = false;
+            break;
+            case GLFW_KEY_LEFT:
+            KEY_LEFT = true;
+            KEY_RIGHT = false;
+            break;
+            case GLFW_KEY_RIGHT:
+            KEY_RIGHT = true;
+            KEY_LEFT = false;
+            break;
+        }
+    }
+    else if (action == GLFW_RELEASE)
+    {
+        switch (key)
+        {
+            case GLFW_KEY_UP:
+            KEY_UP = false;
+            break;
+            case GLFW_KEY_DOWN:
+            KEY_DOWN = false;
+            break;
+            case GLFW_KEY_LEFT:
+            KEY_LEFT = false;
+            break;
+            case GLFW_KEY_RIGHT:
+            KEY_RIGHT = false;
+            break;
+        }
+    }
+}
+
+static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    mouse_x = xpos;
+    mouse_y = ypos;
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+    {
+        switch (button)
+        {
+            case GLFW_MOUSE_BUTTON_LEFT:
+            MOUSE_LEFT_DOWN = true;
+            break;
+            case GLFW_MOUSE_BUTTON_RIGHT:
+            MOUSE_RIGHT_DOWN = true;
+            dash();
+            break;
+        }
+    }
+    if (action == GLFW_RELEASE)
+    {
+        switch (button)
+        {
+            case GLFW_MOUSE_BUTTON_LEFT:
+            MOUSE_LEFT_DOWN = false;
+            break;
+            case GLFW_MOUSE_BUTTON_RIGHT:
+            MOUSE_RIGHT_DOWN = false;
+            break;
+        }
+    }
+}
 
 int main()
 {
-    int _width = 640;
-    int _height = 360;
-    
     if (!glfwInit())
         exit(EXIT_FAILURE);
     
     //glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    //window = glfwCreateWindow(_width, _height, "", glfwGetPrimaryMonitor(), NULL);
-    window = glfwCreateWindow(_width, _height, "", NULL, NULL);
+    //window = glfwCreateWindow(window_width, window_height, "", glfwGetPrimaryMonitor(), NULL);
+    window = glfwCreateWindow(window_width, window_height, "", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -124,6 +204,7 @@ int main()
     glDisable(GL_POINT_SMOOTH);
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_POLYGON_SMOOTH);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_POINT_SMOOTH, GL_DONT_CARE);
@@ -142,67 +223,98 @@ int main()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, TEXTURE_TOTAL_WIDTH, TEXTURE_TOTAL_HEIGHT,0, GL_RGBA, GL_UNSIGNED_BYTE, texture_data);
    
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetWindowSizeCallback(window, window_size_callback);
     glfwSetFramebufferSizeCallback(window, resize_callback);
     
-    float bar_percent = 0.5;
-    float bar_reverse_percent = 0.0;
-    bool up = false;
-    bool up2 = false;
-    double vx = 0, vy = 0;
-    double velocity = 2.7;
-    Map m;
+    float bar_percent = 0.8;
+    float bar_reverse_percent = 0.5;
     
     for (int j = 0; j < MAP_WIDTH; j++)
         for (int k = 0; k < MAP_HEIGHT; k++)
         {
             if (j == 0 || j == MAP_WIDTH - 1 || k == 0 || k == MAP_HEIGHT - 1)
-                m.cells[k][j].texture_id = 1;
+            {
+                m.cell[k][j].texture_id = 1;
+                m.cell[k][j].attributes |= CV_BLOCKED;
+            }
             else
-                m.cells[k][j].texture_id = 2;
+            {
+                m.cell[k][j].texture_id = 2;
+                m.cell[k][j].attributes &= ~CV_BLOCKED;
+            }
         }
     
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
         
-        if (KEY_UP)
+        if (dash_count != max_dash)
         {
-            vy -= velocity;
+            if (dash_count > max_dash)
+                dash_count = max_dash;
+            else
+            {
+                if (dash_cooldown > 0)
+                    dash_cooldown--;
+                else
+                {
+                    dash_count++;
+                    dash_cooldown = 60;
+                }
+            }
         }
-        if (KEY_DOWN)
+        
+        if (MOUSE_LEFT_DOWN)
         {
-            vy += velocity;
-        }
-        if (KEY_LEFT)
-        {
-            vx -= velocity;
-        }
-        if (KEY_RIGHT)
-        {
-            vx += velocity;
+            double dx = (mouse_x - (window_width / 2));
+            double dy = (mouse_y - (window_height / 2));
+            double r = sqrt(dx * dx + dy * dy);
+            
+            vx += velocity * (dx / r);
+            if (m.cell[(int)(vy) / 16][(int)(vx - 5) / 16].attributes & CV_BLOCKED)
+                vx = ((int)vx / 16) * 16 + 5;
+            else if (m.cell[(int)(vy) / 16][(int)(vx + 5) / 16].attributes & CV_BLOCKED)
+                vx = (((int)vx + 15) / 16) * 16 - 5;
+            
+            vy += velocity * (dy / r);
+            if (m.cell[(int)(vy - 5) / 16][(int)(vx - 5) / 16].attributes & CV_BLOCKED)
+                vy = ((int)vy / 16) * 16 + 5;
+            else if (m.cell[(int)(vy + 5) / 16][(int)(vx) / 16].attributes & CV_BLOCKED)
+                vy = (((int)vy + 15) / 16) * 16 - 5;
         }
         
         m.draw(vx, vy);
         
+        glBegin(GL_POLYGON);
+        glVertex2i(window_width/2 - 5, window_height / 2 - 5);
+        glVertex2i(window_width/2 - 5, window_height / 2 + 5);
+        glVertex2i(window_width/2 + 5, window_height / 2 + 5);
+        glVertex2i(window_width/2 + 5, window_height / 2 - 5);
+        glEnd();
+        
         draw_hp_bar(5, 5, 300, bar_percent, bar_reverse_percent);
-    
-        if (bar_percent >= 1.0)
-            up = !up;
-        else if (bar_percent <= 0.0)
-            up = !up;
-        if (up)
-            bar_percent+=0.01;
-        else
-            bar_percent-=0.01;
-    
-        if (bar_reverse_percent >= 1.0)
-            up2 = !up2;
-        else if (bar_reverse_percent <= 0.0)
-            up2 = !up2;
-        if (up2)
-            bar_reverse_percent+=0.01;
-        else
-            bar_reverse_percent-=0.01;
+        
+        glColor3ub(0xFF, 0xFF, 0xFF);
+        for (int i = 0; i < dash_count; i++)
+        {
+            glBegin(GL_POLYGON);
+            glVertex2i(315 + 2 * i * 5, 5);
+            glVertex2i(319 + 2 * i * 5, 5);
+            glVertex2i(315 + 2 * i * 5, 10);
+            glVertex2i(311 + 2 * i * 5, 10);
+            glEnd();
+        }
+        
+        //if (!MOUSE_LEFT_DOWN)
+        {
+            glBegin(GL_POLYGON);
+            glVertex2i(mouse_x, mouse_y);
+            glVertex2i(mouse_x + 6, mouse_y + 6);
+            glVertex2i(mouse_x, mouse_y + 12);
+            glEnd();
+        }
         
         glfwSwapBuffers(window);
         glfwPollEvents();
