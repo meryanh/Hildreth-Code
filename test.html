@@ -1,0 +1,111 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>
+button.zoom-btn:before {
+    height: 30px;
+    width: 30px;
+    content: attr(value);
+    position: absolute;
+    display: block;
+    margin-top: -35px;
+    left: -1;
+    top: 0;
+}
+button.zoom-btn, button.icon-btn {
+    height: 30px;
+    width: 30px;
+    overflow: hidden;
+    position: relative;
+    margin:0;
+    padding:0;
+    border:1px #ccc solid;
+    background-color:#eee;
+}
+button.zoom-btn {
+    font-size: 50px;
+    line-height: 50px;
+}
+button:hover {
+    background-color:#dff;
+}
+button:focus {
+    border-color:#bdd;
+}
+#preview {
+    user-select:none;
+    margin:0;
+    padding:0;
+    color:#222;
+    background-color:#eee;
+    height:90px;
+    width:50px;
+    text-align:left;
+    text-indent:10px;
+    font-size:60px;
+    line-height:0;
+    overflow:visible;
+}
+.btn-group {
+    font-size:0;
+    background-color:#ccc;
+    border:1px #222 solid;
+    width:90px;
+}
+</style>
+</head>
+<body style="width:100%;height:100%;overflow:visible;background-color:#222;">
+<div>
+    <div style="width:30px;display:inline-block;vertical-align:top;">
+    <button class="icon-btn" onclick="">1</button>
+    <button class="icon-btn" onclick="">2</button>
+    <button class="icon-btn" onclick="">3</button>
+    </div>
+    <div style="display:inline-block;vertical-align:top;" id="preview"></div>
+</div>
+<div class="btn-group">
+<button class="zoom-btn" onclick="update(null, 1);" value="&nbsp;"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 1);" value="̤"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 1);" value="͚"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 1);" value="͈"></button>
+</div>
+<div class="btn-group">
+<button class="zoom-btn" onclick="update(null, 2);" value="&nbsp;"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 2);" value="̗"></button>
+</div>
+<div class="btn-group">
+<button class="zoom-btn" onclick="update(null, 3);" value="&nbsp;"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 3);" value="͉"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 3);" value="̫"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 3);" value="̬"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 3);" value="̭"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 3);" value="̮"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 3);" value="̯"></button>
+<button class="zoom-btn" onclick="update(this.getAttribute('value'), 3);" value="̲"></button>
+</div>
+<button class="icon-btn" onclick="copy();">^c</button>
+<script>
+var preview = document.getElementById("preview");
+var arr = Array(null, null, null, null, null);
+var update = function(c, i)
+{
+    arr[i] = c;
+    preview.innerHTML = "&nbsp;"+arr.join("");
+    
+}
+var copy = function(){
+    var copyarea = document.createElement('textarea');
+    copyarea.style.opacity = '0';
+    copyarea.id = 'copy_area';
+    copyarea.innerHTML = "&nbsp;"+arr.join("");
+    document.body.appendChild(copyarea);
+    copyarea = document.getElementById('copy_area');
+    copyarea.select();
+    try {
+        var successful = document.execCommand('copy');
+    } catch (err) { }
+    document.body.removeChild(copyarea);
+}
+</script>
+</body>
+</html>
