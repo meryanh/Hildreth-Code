@@ -6,22 +6,6 @@
     #include <dirent.h>
 #endif
 
-void toClipboard(const std::string &str){
-    HWND hwnd = GetDesktopWindow();
-	OpenClipboard(hwnd);
-	EmptyClipboard();
-	HGLOBAL hg=GlobalAlloc(GMEM_MOVEABLE,str.size()+1);
-	if (!hg){
-		CloseClipboard();
-		return;
-	}
-	memcpy(GlobalLock(hg),str.c_str(),str.size()+1);
-	GlobalUnlock(hg);
-	SetClipboardData(CF_TEXT,hg);
-	CloseClipboard();
-	GlobalFree(hg);
-}
-
 function(quit)
 {
     if (mousebutton == 0) 
@@ -46,8 +30,6 @@ void startup()
     X.window                    (640, 480, "Test UI Window");
     X.window.color              (25, 25, 28);
     X.window.center();
-    
-    toClipboard("SOME STRING...");
 
     BEGIN
         
@@ -57,12 +39,12 @@ void startup()
             SET(color["background"], 50, 50, 50)
             SET(color["text"], 255, 255, 255)
             SET(rect, 0, 0, 640, 480)
-            SET(attribute, "text", (string)"")
+            SET(attribute, "text", (string)"Test 1 2 3")
         END
         
         // Title bar controls:
         ADD(title_bar)
-            SET(display, opaque_text_field)
+            SET(display, text_field_editable)
             SET(activemousemove, move_window)
             SET(color["background"], 50, 50, 50)
             SET(color["text"], 200, 200, 200)

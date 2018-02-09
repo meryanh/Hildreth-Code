@@ -315,7 +315,17 @@ int main()
             glVertex2i(mouse_x, mouse_y + 12);
             glEnd();
         }
-        
+        texture_data[rand()%(TEXTURE_TOTAL_WIDTH * TEXTURE_TOTAL_HEIGHT * 4)] = 0;
+        glDeleteTextures(1, &_TEXTURE_id);
+        glGenTextures(1, &_TEXTURE_id);
+        glBindTexture(GL_TEXTURE_2D, _TEXTURE_id);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, TEXTURE_TOTAL_WIDTH, TEXTURE_TOTAL_HEIGHT,0, GL_RGBA, GL_UNSIGNED_BYTE, texture_data);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

@@ -1,0 +1,51 @@
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="wterm.js"></script>
+    <style>body{background-color:#333;}</style>
+  </head>
+  <body>
+  <div class="wterm-title" style="font-family:monospace;height:256px;width:80ch;">
+    test
+    <div id="test"></div>
+  </div>
+  <script>
+  // Attach a new terminal to the 'test' div
+  var test = new wterm().bind(document.getElementById("test"));
+  
+  // There are no built-in functions. We need to add them...
+  test.register("cls", function(a){
+    terminal.clear();
+  });
+  test.register("echo", function(a){ 
+    terminal.writeLine(terminal.command.substr(5));
+  });
+  test.register("color", function(a){ 
+    if (a.length > 1 && a[1].length == 6 && /[0-9a-fA-F]{6}/.test(a[1]))
+    {
+      terminal.window.style.color = '#'+a[1].substr(0,3);
+      terminal.window.style.backgroundColor = '#'+a[1].substr(3,3);
+    }
+    else
+      terminal.writeLine("USAGE: color [hex]\ne.g. color 3FFF55")
+  });
+  test.register("set-prefix", function(a){ 
+    terminal.prefix = a[1]+' ';
+  });
+  
+  test.register("test", function(a){
+    for (var i = 0; i < a.length; i++){
+      terminal.writeLine('param['+i+'] = '+a[i]);
+    }
+    terminal.write("input: ");
+    terminal.read(function(i){
+      terminal.writeLine("you entered: "+i)
+    });
+  });
+  test.register("add", function(a){
+    terminal.write(parseInt(a[1])+parseInt(a[2]));
+  });
+  </script>
+  </body>
+</html>

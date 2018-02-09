@@ -13,7 +13,7 @@
     #include <direct.h>
     #define GetCurrentDir _getcwd
 #endif
-#define BLOCK_SIZE 2048
+#define BLOCK_SIZE 4096
 #define DELIMITER ','
 
 class File;
@@ -157,7 +157,7 @@ T decompress(std::string value)
     return volatile_cast<T>(result & bitmask<T>());
 }
 
-// Compress any object as a string
+// Compress any primitive object as a string
 template <typename T>
 std::string compress(T value)
 {
@@ -213,7 +213,6 @@ static std::string toString(uint64_t v)
     return ss.str();
 }
 
-
 // Convert std::string to number for calculations
 static uint64_t toNum(std::string v)
 {
@@ -245,7 +244,7 @@ std::string replace(std::string& str, char find, char replace)
 // Replace invalid characters with ? in strings
 std::string sanitize(std::string& str)
 {
-    for (int i = 0; i < str.length(); i++)
+    for (int i = 0; str[i]; i++)
     {
         if (str[i] == '<' || str[i] == '>')
             str[i] = '?';
@@ -272,7 +271,8 @@ FileSystem::FileSystem(std::string _key, std::string _path)
             fin.seekg(256);
             fin.read(buffer, BLOCK_SIZE-256);
             fin.close();
-            //encryptDecrypt(buffer, _key, BLOCK_SIZE-256);
+            encryptDecrypt(buffer, _key, BLOCK_SIZE-256);
+            //std::cout << buffer << std::endl;
             if (!parse(std::string(buffer)))
             {
                 //std::cout << "ERROR: Invalid key or file is corrupted!\n";
@@ -311,7 +311,7 @@ FileSystem::FileSystem(std::string _key, std::string _path)
             fout.seekp(256);
             char chars[1024] = "DTest<DTest<FTestDoc.wut<fdsa,asdf>>Fnew document.docx<abc,xyz>Fnew text document.txt<1111,9999>DTest2<Fhello.png<0,3781>>>DWHAT?<>Ftest.txt<3281,123>";
             parse(chars);
-            //encryptDecrypt(chars, _key);
+            encryptDecrypt(chars, _key);
             fout.write(chars, 150);
             // END TEST //////////////////////////////////////////////////////////////////////////////////////////////
             
@@ -335,10 +335,13 @@ void FileSystem::close()
 
     // Write the fileSystem to the partition
     fout.seekp(256);
-    //char *chars;
-    //chars = (char*)root->data();
-    //encryptDecrypt(chars, key);
-    //fout.write(chars, 1791);
+    std::string data = root->data();
+    int length = data.length();
+    char chars[length];
+    for (int i = 0; i < length; i++)
+        chars[i] = data[i];
+    encryptDecrypt(chars, key, length);
+    fout.write(chars, length);
     fout.close();
 }
 
@@ -396,6 +399,10 @@ bool FileSystem::parse(const std::string &input, Directory* dir)
                 data += input[i++];
             addresses = split(data, DELIMITER);
             dir->add(new File(filename, decompress(addresses[0]), decompress(addresses[1])));
+        }
+        else if (input[i] == 'P')
+        {
+            i++;
         }
         else if (input[i] == '>')
             dir = (dir->get_parent());
@@ -756,7 +763,7 @@ std::string Directory::directory_list()
     {
         if (i > 0)
             result += '\n';
-        result += directories[i]->title;
+        result +=  "<DIR> " + directories[i]->title;
     }
     return result;
 }
