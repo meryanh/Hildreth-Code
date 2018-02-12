@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>test</title>
+    <link rel="stylesheet" href="./main.css">
+  </head>
+    <body style="-webkit-user-select:none;margin:0;">
+        <div class="title-bar">
+        <button aria-label="Close" tabindex="-1" id="close-btn" class="window-control"><svg aria-hidden="true" version="1.1" width="10" height="10"><path d="M 0,0 0,0.7 4.3,5 0,9.3 0,10 0.7,10 5,5.7 9.3,10 10,10 10,9.3 5.7,5 10,0.7 10,0 9.3,0 5,4.3 0.7,0 Z"></path></svg></button><button aria-label="Maximize" tabindex="-1" id="max-btn" class="window-control"><svg aria-hidden="true" version="1.1" width="10" height="10"><path d="M 0,0 0,10 10,10 10,0 Z M 1,1 9,1 9,9 1,9 Z"></path></svg></button><button aria-label="Minimize" tabindex="-1" id="min-btn" class="window-control"><svg aria-hidden="true" version="1.1" width="10" height="10"><path d="M 0,5 10,5 10,6 0,6 Z"></path></svg></button>
+        </div>
+        <div class="tool-bar">
+        <button style="" onclick="path_up();init_files();">↑</button>
+        <span id="folder-path"></span>
+        </div>
+        <div id="main-content">
+        </div>
+        <script>
+            require('./renderer.js');
+            require('./loader.js');
+            window.loadStart();
+            setTimeout(function(){window.loadEnd();}, 1000);
+            function init_files(){
+                window.loadStart();
+                try{
+                    window.get_dir();
+                    var m = document.getElementById('main-content');
+                    m.innerHTML = '';
+                    for (var i = 0; i < window.fdata.length; i++){
+                        if (window.fdata[i].isDirectory)
+                        {
+                            (function(){
+                                var n = document.createElement('a');
+                                n.className = 'content';
+                                n.setAttribute('type', 'folder');
+                                <!-- n.setAttribute('name', window.fdata[i].name); -->
+                                n.innerText = window.fdata[i].name;
+                                n.ondblclick = function(){
+                                    window.path_down(this.innerText);
+                                    window.init_files();
+                                    };
+                                m.appendChild(n);
+                            })();
+                        }
+                        else{
+                            (function(){
+                                var n = document.createElement('a');
+                                n.className = 'content';
+                                n.setAttribute('type', 'file');
+                                <!-- n.setAttribute('name', window.fdata[i].name); -->
+                                n.setAttribute('size', window.fdata[i].size);
+                                n.innerText = window.fdata[i].name;
+                                n.ondblclick = function(){
+                                    window.launch_file(this.innerText);
+                                    };
+                                m.appendChild(n);
+                            })();
+                        }
+                    }
+                }catch (ex){}
+                document.getElementById('folder-path').innerText = window.fpath;
+                window.loadEnd();
+            }
+            window.addEventListener('load', init_files);
+        </script>
+    </body>
+</html>
