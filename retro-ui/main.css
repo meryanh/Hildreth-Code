@@ -1,0 +1,71 @@
+html{
+    cursor:default;
+    user-select:none;
+    /* background-color:#aaa; */
+    background-color:#4e95b5;
+}
+.prototype-container{
+    display:none;
+}
+.toolbar{
+    font-size:0;
+    height: 26px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #cecece;
+    border: 2px outset #fff;
+    box-sizing: border-box;
+}
+button{
+    height: 20px;
+    margin:1px;
+    font-size:12px;
+    box-sizing: border-box;
+    background-color: #cecece;
+    border:2px solid transparent;
+    outline:0!important;
+}
+button.default,
+button:hover{
+    border: 2px outset #fff;
+}
+button:active{
+    border: 2px inset #fff;
+}
+button+div.menu{
+    display: none;
+    left:-2px;
+    min-width: 200px;
+    position: absolute;
+    font-size:12px;
+    background-color: #cecece;
+    border: 2px outset #fff;
+    box-sizing: border-box;
+}
+button+div.menu.open-above{
+    bottom: 24px;
+}
+button+div.menu > button{
+    margin:0;
+    text-align:left;
+    width:100%;
+    display:block;
+}
+button:focus+div.menu,
+button+div.menu:hover{
+    display:block;
+}
+.titlebar{
+    font-size:0;
+    height: 24px;
+    width:100%;
+    background-color: #cecece;
+    border: 2px outset #fff;
+    box-sizing: border-box;
+}
+.titlebar > button{
+    margin:0;
+    float:right;
+}
