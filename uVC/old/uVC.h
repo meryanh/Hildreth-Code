@@ -36,7 +36,6 @@ void readBlock(char *filename, uint64_t block_addr, char buffer[BLOCK_SIZE]);
 class FileSystem
 {
 private:
-    std::vector<File*> empty;
     uint64_t end;
     std::string path;
     std::string key;
@@ -237,7 +236,7 @@ std::string sanitize(std::string& str)
 void readBlock(char *filename, uint64_t block_addr, char buffer[BLOCK_SIZE])
 {
     std::ifstream fin(filename, std::ios::binary);
-    // memset(buffer, '\0', BLOCK_SIZE);
+    memset(buffer, '\0', BLOCK_SIZE);
     fin.seekg(block_addr*BLOCK_SIZE);
     fin.read(buffer, BLOCK_SIZE);
     fin.close();
@@ -274,7 +273,7 @@ FileSystem::FileSystem(std::string _key, std::string _path)
         {
             // Read the system block from the file
             char buffer[BLOCK_SIZE] = {0};
-            readBlock(_path, 0, buffer);
+            readBlock((char*)_path.c_str(), 0, buffer);
             encryptDecrypt(buffer, _key, BLOCK_SIZE);
             //std::cout << buffer << std::endl;
             if (!parse(std::string(buffer)))

@@ -1,0 +1,36 @@
+[{
+    "name":"Test",
+    "title":"Test Window",
+    "url":"apps/test.html",
+    "width":400,
+    "height":300,
+    "resize":false
+},{
+    "name":"Terminal",
+    "title":"Terminal",
+    "url":"apps/wterm/index.html",
+    "width":400,
+    "height":250,
+    "resize":true
+},{
+    "name":"Text Editor",
+    "title":"Text Editor",
+    "url":"apps/editor/index.html",
+    "width":332,
+    "height":300,
+    "resize":false
+},{
+    "name":"Satellite",
+    "title":"Satellite",
+    "url":"apps/orbit.html",
+    "width":200,
+    "height":200,
+    "resize":true
+},{
+    "name":"Clock",
+    "title":"Clock",
+    "url":"apps/clock.html",
+    "width":210,
+    "height":48,
+    "resize":false
+}]

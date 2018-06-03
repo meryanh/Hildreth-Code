@@ -1,42 +1,86 @@
+<!doctype html>
 <html>
     <head>
-        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <script type="text/javascript" src="main.js"></script>
-        <link rel="stylesheet" type="text/css" href="main.css">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta title="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <title>Test</title>
+        <script type="text/javascript" src="data.json"></script>
+        <script type="text/javascript" src="script.js"></script>
+        <style>
+            
+        </style>
+        <script>
+        // Replace this stuff with HTML dialogs:
+        function onSelectFile(event) {
+            HTMLPrompt('Select file.', function(r){
+                if (r){
+                    top.setStyleSetting('backgroundColor',null);
+                    top.setStyleSetting('backgroundImage','url(file:///'+r.replace(/\\/g,'/')+')');
+                }
+            });
+        }
+        function onSelectColor(event) {
+            top.setStyleSetting('backgroundImage',null);
+            top.setStyleSetting('backgroundColor',event.target.value);
+        }
+        function resetSettings(event) {
+            top.window.hasStoredSettingChange=true;
+            top.window.settings={};
+            HTMLConfirm('You must restart for these changes to take effect.<br/>Restart now?', function(v){
+                if (v)
+                    window.location.href = window.location.href;
+            });
+        }
+        function contextClicked(event) {
+            if (event.target.classList.contains("sub-context-btn"))
+                return;
+            var ctx = document.getElementById('start-context');
+            ctx.style.display = 'none';
+            setTimeout(function(){ctx.style.display = null;},500);
+        }
+        </script>
     </head>
     <body>
-        <div class="prototype-container">
-            <div id="prototype-window">
-                <div style="height:26px;width:100%;">
-                    <button class="close-btn"></button>
-                    <button class="max-btn"></button>
-                    <button class="min-btn"></button>
+    <div id="window-template" style="display:none;">
+        <table onmousedown="dragStart(event, this.parentElement)" class="header-bar">
+            <tbody>
+                <tr>
+                    <td class="title-bar"></td>
+                    <td class="title-bar-background"></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="window-container"><iframe></iframe></div>
+        <button class="min-btn"></button>
+        <button class="close-btn"></button>
+        <div class="resize-btn" onmousedown="resizeStart(event, this.parentElement)"></div>
+    </div>
+    <div class="drag-backdrop" id="drag-backdrop"></div>
+    <div id="toolbar" class="toolbar bordered">
+        <div class="context-container">
+            <button>Menu</button>
+            <div class="context" id="start-context" onclick="contextClicked(event)">
+                <button class="sub-context-btn">Settings</button>
+                <div class="sub-context">
+                    <button id="settings-reset" onclick="resetSettings()">Restore Defaults</button>
+                    <button id="background-image" onclick="onSelectFile(event)">Set Background Image</button>
+                    <!-- <input type="file" id="background-image" onchange="onSelectFile(event)"><label for="background-image">Set Background Image</label> -->
+                    <input type="color" id="background-color" onchange="onSelectColor(event)"><label for="background-color">Set Background Color</label>
                 </div>
-                <div class="window-content" style="height:100px;width:200px;">
-                    
+                <button class="sub-context-btn">System</button>
+                <div class="sub-context">
+                    <button onclick="window.location.href = 'about:blank';">Log Out</button>
+                    <button onclick="window.location.href = window.location.href;">Restart</button>
+                    <button onclick=" document.body.style.backgroundColor = '#000';document.body.innerHTML = '';">Shut Down</button>
                 </div>
+                <div id="start-btn-dropdown" class="context-section"></div>
             </div>
         </div>
-        
-            <div id="window1" style="position:absolute;background-color:#444;border:2px outset #fff;">
-                <div class="titlebar">
-                    <button class="close-btn"><svg aria-hidden="true" version="1.1" width="10" height="10"><path d="M 0,0 0,0.7 4.3,5 0,9.3 0,10 0.7,10 5,5.7 9.3,10 10,10 10,9.3 5.7,5 10,0.7 10,0 9.3,0 5,4.3 0.7,0 Z"></path></svg></button>
-                    <button class="max-btn"><svg aria-hidden="true" version="1.1" width="10" height="10"><path d="M 0,0 0,10 10,10 10,0 Z M 1,1 9,1 9,9 1,9 Z"></path></svg></button>
-                    <button class="min-btn"><svg aria-hidden="true" version="1.1" width="10" height="10"><path d="M 0,5 10,5 10,6 0,6 Z"></path></svg></button>
-                </div>
-                <div class="window-content" style="height:100px;width:200px;">
-                    
-                </div>
-            </div>
-        <div class="toolbar">
-        <button>Menu</button>
-        <div class="menu open-above">
-            <button>item1</button>
-            <button>item2</button>
-            <button>item3</button>
-        </div>
-        <button>btn2</button>
-        </div>
+        <span class="spacer"></span>
+        <div id="system-clock"></div>
+    </div>
+    <iframe id="load-frame" style="display:none;"></iframe>
+    <button id="peek-btn" class="peek-btn"></button>
     </body>
 </html>

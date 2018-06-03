@@ -25,9 +25,10 @@ void encrypt(char toEncrypt[512], std::string key, int size)
 
 int main()
 {
-    uint64_t i = 42;
-    std::string s = compress(i);
-    cout << s << endl;
-    cout << decompress(s) << endl;
+	char buffer[BLOCK_SIZE];
+    memset(buffer, '\0', BLOCK_SIZE);
+	char *data = (char*)"test";
+	ccpy(buffer, data, 0, 0, 4);
+	writeBlock((char*)"data.txt", 0, buffer);
     return 0;
 }

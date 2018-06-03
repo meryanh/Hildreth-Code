@@ -1,0 +1,81 @@
+<!doctype html>
+<html style="height:100%;">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <script src="wterm.js"></script>
+        <title>Terminal</title>
+        <style>body{background-color:#333;}</style>
+    </head>
+    <body style="margin:0;height:100%;">
+    <script>
+    // Attach a terminal
+    var test = new wterm().bind(document.body);
+    
+    // There are no built-in functions. We need to add them...
+    test.register("cls", function(a){
+        terminal.clear();
+    });
+    
+    test.register("echo", function(a){ 
+        terminal.writeLine(terminal.command.substr(5));
+    });
+    
+    test.register("color", function(a){ 
+        terminal.setColor(a);
+    });
+    
+    test.register("set-prefix", function(a){ 
+        terminal.prefix = a[1]?a[1]+' ':'> ';
+    });
+    
+    test.register("test", function(a){
+        for (var i = 0; i < a.length; i++){
+            terminal.writeLine('param['+i+'] = '+a[i]);
+        }
+        terminal.write("input: ");
+        terminal.read(function(i){
+            terminal.writeLine("you entered: "+i)
+        });
+    });
+    
+    test.register("add", function(a){
+        terminal.writeLine(parseInt(a[1])+parseInt(a[2]));
+    });
+    
+        function getRandomColor() {
+                var letters = '0123456789ABCDEF';
+                var color = '';
+                for (var i = 0; i < 6; i++) {
+                        color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+        }
+    
+    test.register("glitch", function(a){
+        //terminal.lock();
+        var chars = 'ABCDEFGHIJKLLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890!@#$%^&*()-=_+<>[]{};:,.?|';
+        //var interval = setInterval(function(){
+            var n, walk=document.createTreeWalker(terminal.log,NodeFilter.SHOW_TEXT,null,false);
+            while(n=walk.nextNode()){
+                var t = n.textContent;
+                var x = Math.floor(Math.random() * t.length);
+                if (t[x] == '\n')
+                    continue;
+                t = t.substr(0,x) + (chars[Math.floor(Math.random() * chars.length)]) + t.substr(x+1)
+                n.textContent = t;
+            }
+        //}, 50);
+        //setTimeout(function(){
+                //clearInterval(interval);
+                //setTimeout(function(){
+                        //terminal.unlock();
+                        //terminal.read(function(i){
+                            //terminal.writeLine('ERROR')
+                        //});
+                //}, 500);
+        //}, 3000);
+    });
+    </script>
+    </body>
+</html>

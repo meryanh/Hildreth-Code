@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta title="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    </head>
+<body style="font-family:monospace;background-color:#000;color:#0F0;font-size:50vh;text-align:center;user-select:none;-moz-user-select:none;-webkit-user-select:none;-ms-user-select:none;height:100%;">
+<div id="system-clock"></div>
+<script>
+    var clock = document.getElementById('system-clock');
+    var date = new Date();
+    clock.innerText = date.toLocaleTimeString();
+    clock.title = date.toLocaleDateString();
+    setInterval(function(){
+        clock.innerText = new Date().toLocaleTimeString();
+    }, 1000);
+</script>
+</body>
+</html>
