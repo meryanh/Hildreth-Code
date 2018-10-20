@@ -42,7 +42,7 @@
         var wnd_z = next_zIndex++;
         window_info.id = makeID();
         var wnd = strToElement(
-    `<div wnd_index="${index}" id="${window_info.id}" class="window" style="display:none;top:${wnd_y};left:${wnd_x};width:${wnd_width};height:${wnd_height};z-index:${wnd_z}">
+    `<div wnd_index="${index}" id="${window_info.id}" class="window ${window_info.resize?'resizable':''}" style="display:none;top:${wnd_y};left:${wnd_x};width:${wnd_width};height:${wnd_height};z-index:${wnd_z}">
         <table class="header-bar" style="right:${window_info.resize?'57px':'40px'}">
             <tbody>
                 <tr>
@@ -117,8 +117,9 @@
         window.addEventListener('mouseup', mouseup, false);
     }
     function dragStart(ev, el){
-        if (el.classList.contains('fullscreen'))
-            return;
+        if (el.classList.contains('fullscreen')){
+			return;
+		}
         var backdrop = document.getElementById('drag-backdrop');
         backdrop.style.display = 'block';
         ev = ev || window.event;
